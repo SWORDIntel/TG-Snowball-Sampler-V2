@@ -1,8 +1,8 @@
-# Telegram Snowball Sampling Tool
+# Project SNOW
 ![Main Image](https://github.com/thomasjjj/Telegram-Snowball-Sampling/assets/118008765/58cae690-b8cc-4b93-b073-809d888fe49e)
 
 ## Overview
-The Telegram Snowball Sampling Tool is a Python-based utility designed for conducting snowball sampling to collect Telegram channels through forwards. This script uses the Telethon library to interact with Telegram's API, allowing for the automated discovery and processing of Telegram channels based on message forwards.
+Project SNOW is a Python-based utility designed for conducting snowball sampling to collect Telegram channels through forwards. This script uses the Telethon library to interact with Telegram's API, allowing for the automated discovery and processing of Telegram channels based on message forwards.
 
 ## Summary of Snowball Sampling in Telegram Network Analysis
 Snowball sampling is a strategic methodology employed in network analysis, particularly effective for investigating populations that are otherwise difficult to observe directly. This method is especially useful in the context of Telegram, a social network where channels and chats serve as nodes. These nodes are interconnected through forwards, mentions, and internal hyperlinks, which function as the network edges.
@@ -22,7 +22,7 @@ Various strategies are employed to determine the expansion of the sample. For in
 ## Important Warning: Runtime Expectations
 
 ### Exponential Growth in Runtime
-The Telegram Snowball Sampling Tool, while powerful, can potentially take several days (or drastically longer with more iterations) to complete its run. This extended runtime is due to the exponential nature of the snowball sampling process.
+The Project SNOW, while powerful, can potentially take several days (or drastically longer with more iterations) to complete its run. This extended runtime is due to the exponential nature of the snowball sampling process.
 
 - **Exponential Process Explained**: In snowball sampling, each iteration potentially adds a new set of channels to be processed in the next iteration. For example, if each channel forwards messages from just three new channels, in the first iteration, you will process three channels, nine in the second iteration, and twenty-seven in the third iteration. This growth in the number of channels is exponential, meaning that each additional iteration can significantly increase the total number of channels to be processed, leading to a massive increase in runtime.
 
@@ -33,78 +33,224 @@ The Telegram Snowball Sampling Tool, while powerful, can potentially take severa
 - **Filter Forwards**: To improve efficiency, consider filtering forwards to focus on channels that are commonly mentioned. This approach helps in targeting more relevant channels and reduces unnecessary processing.
 - **Limit Posts Per Channel**: Another way to control runtime is by limiting the number of posts searched in each channel. This can significantly reduce the time taken per channel, especially for channels with a large number of posts.
 
+## Architecture Overview
 
-## Features
-- Automated collection of Telegram channels through snowball sampling.
-- Customizable iteration depth, mention thresholds, and message processing limits.
-- CSV output for easy analysis of collected data.
+Project SNOW consists of several interconnected components:
 
-## Requirements
-- Python 3.6 or higher.
-- Telethon library.
-- A registered Telegram application (for API credentials).
+### Core Components
+1. **Main Module** (`main.py`): Entry point containing core sampling logic, message processing, and application control flow
+2. **Database Manager** (`db_manager.py`): Manages persistent storage of data
+3. **Cache Manager** (`cache_manager.py`): Handles caching and rate limiting of API calls
+4. **Edge List** (`EdgeList.py`): Creates network edge lists for analysis
+5. **Configuration** (`config.py` & `config.yaml`): Manages application settings
+6. **Utilities** (`utils.py`): Contains helper functions and specialized components
 
-## Configuration
-Edit the following parameters in the script as needed:
-- `iterations`: Number of iterations for the snowball sampling.
-- `min_mentions`: Minimum number of mentions for a channel to be included.
-- `max_posts`: Maximum number of posts to check per channel (leave blank for no limit).
+### Terminal User Interface (TUI)
+The application features a comprehensive Terminal User Interface built with npyscreen:
 
-## Output Format
-The output CSV file contains columns for each iteration, with each row representing a discovered channel. The format is as follows:
-- `Iteration 1_id, Iteration 1_channelname, Iteration 2_id, Iteration 2_channelname, ...`
+- **MainForm**: Primary interface for controlling the sampling process
+- **ConfigForm**: Configuration management interface
+- **PersistenceForm**: Session persistence management
+- **FocusForm**: Focused analysis of specific channels or users
+- **ElasticsearchForm**: Elasticsearch integration configuration
+- **TgArchiveForm**: Interface for tg-archive integration
+- **ProxyForm**: Proxy and VPN management
 
-## Merging CSV Files
-
-This section of the script is designed to efficiently merge data from multiple CSV files located in the `results` folder and compile them into a single CSV file. This process helps in consolidating data from various runs into a unified dataset.
-
-### Functionality
-
-- **Directory Check and Creation**: The script first checks for the existence of a `merged` directory. If this directory doesn't exist, it is automatically created.
-- **Data Aggregation**: All CSV files within the `results` directory are processed. The script reads each file and extracts channel IDs and names, assuming these are located in alternating columns.
-- **Duplicate Removal and Data Merging**: The new data is appended to any existing data in the `merged_channels.csv` file within the `merged` folder. The script ensures that only unique entries are retained, effectively removing any duplicates.
-- **Appending New Data**: If `merged_channels.csv` already exists, the script appends new, unique data to it. If the file doesn't exist, it's created and populated with the merged data.
-
-### Usage
-
-Simply execute the script, and it will automatically process and merge the CSV files. The resulting file, `merged_channels.csv`, will be located in the `merged` directory.
+### ProxyManager
+The `ProxyManager` class (in `utils.py`) provides robust proxy rotation and VPN integration:
 
 ```python
-if __name__ == '__main__':
-    # Specify the folders and filename
-    results_folder = 'results'
-    merged_folder = 'merged'
-    merged_filename = 'merged_channels.csv'
+class ProxyManager:
+    """Handles proxy rotation, validation, and VPN integration."""
     
-    # Call the function to merge CSV files
-    merge_csv_files(results_folder, merged_folder, merged_filename)
+    def __init__(self, proxy_file='proxy.txt', rotation_interval=300, validation_timeout=10):
+        self.proxy_file = proxy_file
+        self.rotation_interval = rotation_interval  # seconds
+        self.validation_timeout = validation_timeout  # seconds
+        self.proxies = []
+        self.validated_proxies = []
+        self.current_proxy = None
+        self.last_rotation = 0
+        self.vpn_provider = None
+        self.vpn_credentials = {}
+        self.vpn_connected = False
+        self.lock = threading.Lock()
 ```
 
-This script provides a seamless way to combine data from multiple iterations or runs, making data analysis and management more streamlined.
+Features include:
+- Loading and validating proxies from file
+- Automatic proxy rotation
+- Integration with VPN services (IPVanish, NordVPN)
+- Connection monitoring and management
 
+### CacheManager
+The `CacheManager` class (in `cache_manager.py`) provides:
 
-## Disclaimer
-This tool is for educational and research purposes only. Please ensure that you comply with Telegram's terms of service and respect privacy and ethical guidelines when using this tool.
+- Disk-based caching of API responses
+- Rate limiting with exponential backoff
+- Decorator functions for easy implementation
+- TTL (Time-To-Live) management for cached items
 
-# TODO
-**List of manageable and fun TODOs:**
-- [x] Add per-find CSV/TXT file saves to prevent loss of data if execution is stopped early.
-  - May want to make this optional depending on speed - but TG API rate limiting is the biggest bottleneck so impact expected to be minimal/negligible.
-  - Consider alternative output formats.
-- [ ] Output to Gephi and other network analysis formats.
-- [x] Edgelist creation
-- [ ] Add more detailed counts into the terminal feedback.
-- [ ] Add possible estimation of time remaining based on statistical evaluation of progress (likely monte-carlo required).
-- [ ] Analysis of forward messages to assign a source language (useful for additional filtering).
-  - Lots of research papers covering this technique appear to add language filtering into the process. 
-  - Building this in on a per-channel and per-forward message level would automate this process
-- [ ] Statistical report of the process and findings (this may be useful for researchers identifying data biases).
-  - List of all channels searched.
-  - List of all forwards found (including those filtered out).
-  - Some form of search ranking within the pool of analysed channels.
-- [ ] Add option to scrape channel details and metadata on collection or at output to create a more detailed list overview. 
-- [x] Added script to merge CSV results from multiple runs into a merged CSV with single list rather than lists per iteration.
+### Database Architecture
+The `DBManager` and `Database` classes (in `db_manager.py`) implement:
 
-**Harder TODOs – All contributions and suggestions are welcome:** 
-- [ ] Add multi-API parallel processing to speed the process (will need more advanced queue assignment).
-- [ ] Live visualisation of growing network.
+- SQLite database for persistent storage
+- Schema versioning and migration support
+- Transaction management with thread safety
+- Comprehensive data models for channels, mentions, and metadata
+
+## Features
+- Automated collection of Telegram channels through snowball sampling
+- Customizable iteration depth, mention thresholds, and message processing limits
+- CSV output for easy analysis of collected data
+- Terminal-based user interface (TUI) for easy configuration and monitoring
+- Background operation via screen/tmux for SSH connections
+- HMAC verification for enhanced API security
+- Visualization of network relationships and channel categories
+- Category-based filtering to focus on specific types of channels
+- Time-based sampling to analyze content from specific date ranges
+- Export to network analysis formats (GEXF, GraphML, JSON)
+- Webhook notifications to monitor progress (Slack, Discord, etc.)
+- Proxy rotation and VPN integration for improved anonymity
+- Elasticsearch integration for advanced analytics
+- tg-archive integration for creating static web archives
+
+## Requirements
+- Python 3.6 or higher
+- Telethon library for Telegram API interaction
+- A registered Telegram application (for API credentials)
+- npyscreen for the Terminal User Interface
+- Optional: screen or tmux for background operations (highly recommended for SSH sessions)
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/username/Project-SNOW.git
+   cd Project-SNOW
+   ```
+
+2. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Install screen or tmux (recommended for SSH sessions):
+   ```bash
+   # For Debian/Ubuntu
+   sudo apt-get install screen
+   # or
+   sudo apt-get install tmux
+   
+   # For CentOS/RHEL
+   sudo yum install screen
+   # or
+   sudo yum install tmux
+   ```
+
+4. Configure the application by editing `config.yaml` or using the TUI
+
+## Security Features
+
+The application includes several security features:
+
+1. **HMAC Verification**: API requests are verified using HMAC tokens
+2. **Encryption Key Rotation**: Regular rotation of encryption keys for enhanced security
+3. **Secure Credential Storage**: API credentials are stored securely
+4. **VPN Integration**: Optional VPN connectivity for anonymous operation
+
+Example from SecurityConfig:
+```python
+def generate_hmac_token(self, message: str) -> str:
+    """Generate an HMAC token for the given message"""
+    key = hashlib.sha256(self.api_salt.encode()).digest()
+    return hmac.new(
+        key=key,
+        msg=message.encode(),
+        digestmod=hashlib.sha256
+    ).hexdigest()
+```
+
+## Usage
+
+### Starting via Terminal UI
+```bash
+python main.py
+```
+This will launch the Terminal UI where you can configure your sampling parameters and start the process.
+
+### Focusing on a Specific User
+To focus analysis on a specific Telegram user instead of a channel:
+
+```bash
+python main.py --focus-user username --focus-depth 3 --include-replies
+```
+
+Options:
+- `--focus-user`: Target username to analyze
+- `--focus-depth`: Maximum depth of analysis (default: 3)
+- `--include-replies`: Include replies in the analysis
+- `--include-forwards`: Include forwards in the analysis (enabled by default)
+
+### Filtering by Category
+To focus only on channels in specific categories:
+
+```bash
+python main.py --categories politics,technology,cybersecurity
+```
+
+This will only process channels that match the specified categories. The tool automatically categorizes channels based on their title and description.
+
+### Time-Based Sampling
+To analyze messages within a specific date range:
+
+```bash
+python main.py --date-start 2023-01-01 --date-end 2023-06-30
+```
+
+This will only process messages that were posted within the specified date range, allowing for focused temporal analysis.
+
+### tg-archive Integration
+To create static web archives of Telegram channels using tg-archive:
+
+```bash
+python main.py --tg-archive --tg-archive-channel channelname --tg-archive-new
+```
+
+Options:
+- `--tg-archive`: Enable tg-archive integration
+- `--tg-archive-channel`: Target channel username or ID to archive
+- `--tg-archive-new` or `-n`: Create a new archive site (initial setup)
+- `--tg-archive-sync` or `-s`: Sync messages to an existing archive
+- `--tg-archive-path`: Output path for the archive (default: tg_archive)
+- `--tg-archive-no-media`: Disable media downloads
+
+### Proxy Rotation & VPN Integration
+For improved anonymity and to bypass rate limiting or network restrictions:
+
+```bash
+python main.py --proxy --proxy-file proxies.txt --proxy-rotation-interval 10
+```
+
+Or with VPN:
+
+```bash
+python main.py --vpn ipvanish --vpn-username your_username --vpn-password your_password
+```
+
+Options:
+- `--proxy`: Enable proxy rotation
+- `--proxy-file`: Path to file containing proxy list (default: proxy.txt)
+- `--proxy-rotation-interval`: Minutes between proxy rotations (default: 5)
+- `--proxy-timeout`: Seconds for proxy validation timeout (default: 10)
+- `--vpn`: VPN provider to use (choices: ipvanish, nordvpn)
+- `--vpn-username`: VPN account username
+- `--vpn-password`: VPN account password
+- `--vpn-server`: Optional specific server to connect to
+
+### Generating Visualizations
+To generate network visualizations from the collected data:
+
+```bash
+python main.py --visualize --viz-type network --output-file network.html
+```

@@ -1,0 +1,121 @@
+# Project SNOW Configuration
+
+# API keys configuration
+api_keys: 
+  # You can add multiple API keys for fallback and load balancing
+  - api_id: "YOUR_API_ID_1"  # Replace with your API ID
+    api_hash: "YOUR_API_HASH_1"  # Replace with your API hash
+  # - api_id: "YOUR_API_ID_2"  # Uncomment to add additional API keys
+  #   api_hash: "YOUR_API_HASH_2"
+
+# Rate limiting configuration
+rate_limit:
+  max_requests_per_second: 1.0  # Maximum requests per second per API key
+  backoff_factor: 1.5  # Exponential backoff factor when hitting rate limits
+  max_backoff_time: 300  # Maximum backoff time in seconds (5 minutes)
+  initial_backoff_time: 5  # Initial backoff time in seconds
+  jitter: true  # Add randomness to backoff times to prevent request collisions
+
+# Cache configuration
+cache:
+  enabled: true  # Enable caching
+  ttl_seconds: 3600  # Default TTL for cached items (1 hour)
+  entity_ttl_seconds: 86400  # TTL for cached entities (24 hours)
+  metadata_ttl_seconds: 604800  # TTL for cached metadata (7 days)
+  max_cache_size_mb: 100  # Maximum cache size in MB
+  persistent: true  # Use persistent cache
+  cache_dir: "cache"  # Directory for persistent cache
+
+# Security configuration
+security:
+  enable_hmac: true  # Enable HMAC verification for API requests
+  api_salt: "project_snow"  # Salt used for HMAC generation
+  token_ttl: 300  # Time-to-live for security tokens in seconds
+  encryption_key_rotation: true  # Whether to rotate encryption keys periodically
+  rotation_interval_days: 7  # Days between encryption key rotations
+
+# Channel categorization configuration
+category:
+  enabled: true  # Enable categorization
+  min_channels_per_category: 3  # Minimum channels needed to create a category
+  use_machine_learning: true  # Use machine learning for categorization
+  # Custom categories and keywords
+  custom_categories:
+    politics:
+      - politics
+      - government
+      - election
+      - president
+    technology:
+      - tech
+      - software
+      - programming
+      - computer
+    cryptocurrency:
+      - crypto
+      - bitcoin
+      - ethereum
+      - blockchain
+
+# Database configuration
+database:
+  db_path: "data/project_snow.db"  # Path to the SQLite database file
+  enable_persistence: true  # Enable persistence
+  auto_backup: true  # Automatically backup the database
+  backup_interval_minutes: 30  # Backup interval in minutes
+  max_backups: 5  # Maximum number of backups to keep
+
+# Sampling configuration
+sampling:
+  # Initial channels to start sampling from
+  initial_channels:
+    - telegram  # Official Telegram channel
+  iterations: 3  # Number of iterations for snowball sampling
+  min_mentions: 5  # Minimum number of mentions for a channel to be included
+  max_posts: 1000  # Maximum number of posts to check per channel
+  max_concurrent_channels: 3  # Maximum number of channels to process concurrently
+  max_concurrent_messages: 20  # Maximum number of messages to process concurrently
+
+# Output configuration
+output:
+  results_dir: "results"  # Directory for results
+  merged_dir: "merged"  # Directory for merged results
+  categorized_dir: "categorized"  # Directory for categorized results
+  html_output: true  # Generate HTML output
+  csv_output: true  # Generate CSV output
+  json_output: true  # Generate JSON output
+  generate_gephi: true  # Generate Gephi-compatible output
+
+# Elasticsearch export configuration
+elasticsearch:
+  enabled: false  # Set to true to enable Elasticsearch export
+  export_type: "filebeat"  # 'filebeat' or 'logstash'
+  index_name: "project_snow"  # Base name for the Elasticsearch index
+  hosts: ["localhost:9200"]  # List of Elasticsearch hosts
+  username: null  # Optional: Username for Elasticsearch authentication
+  password: null  # Optional: Password for Elasticsearch authentication
+  ssl_enabled: false  # Whether to use SSL for Elasticsearch connection
+  export_dir: "elasticsearch_export"  # Directory for Elasticsearch export files
+  document_type: "channel"  # Type of document for Elasticsearch
+  template_enabled: true  # Whether to create an index template
+
+# Proxy configuration
+proxy:
+  enabled: false  # Enable proxy rotation
+  proxy_file: "proxy.txt"  # Path to proxy list file
+  rotation_interval_minutes: 5  # How often to rotate proxies
+  validation_timeout_seconds: 10  # Timeout for proxy validation
+  auto_retry: true  # Automatically retry with new proxy on failure
+  validate_on_startup: true  # Validate all proxies on startup
+
+# VPN configuration
+vpn:
+  provider: "none"  # Options: none, ipvanish, nordvpn
+  username: null  # VPN username
+  password: null  # VPN password
+  server: null  # Optional: Specific server to connect to
+  auto_reconnect: true  # Auto-reconnect if connection drops
+  check_interval_minutes: 30  # How often to verify connection
+
+# Logging configuration
+log_level: "INFO"  # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL 

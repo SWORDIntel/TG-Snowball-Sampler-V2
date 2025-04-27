@@ -9,3 +9,25 @@ rsa==4.9
 six==1.16.0
 Telethon==1.33.1
 tzdata==2024.1
+tqdm==4.66.2
+npyscreen>=4.10.5
+cryptography==42.0.5
+scikit-learn==1.4.0
+nltk==3.8.1
+pydantic==2.5.2
+pyyaml>=6.0
+toml==0.10.2
+diskcache==5.6.3
+tenacity==8.2.3
+alembic==1.12.1
+tabulate==0.9.0
+matplotlib>=3.7.0
+networkx>=3.0
+matplotlib-chord>=0.3.1
+requests>=2.28.0
+aiohttp>=3.8.0
+aiohttp_socks>=0.7.0
+pysocks>=1.7.1
+
+# Optional dependencies
+# tg-archive>=1.2.2  # Required for tg-archive integration
